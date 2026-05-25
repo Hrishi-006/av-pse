@@ -1,0 +1,21 @@
+# Data and outputs
+preprocessed/
+overfit_output/
+*.pt
+*.ckpt
+*.pth
+
+# Python
+venv_preprocess/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/

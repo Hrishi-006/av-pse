@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -m pytest tests/test_multi_res_loss.py -v)"
+    ]
+  }
+}

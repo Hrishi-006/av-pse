@@ -1,0 +1,53 @@
+# AV-PSE default training configuration
+# All paths are Kaggle-relative; override on the command line with --override key=value
+
+# ── Data ──────────────────────────────────────────────────────────────────────
+data:
+  manifest_path: /kaggle/input/grid-av/manifest.json
+  audio_dir:     /kaggle/input/grid-audio
+  landmark_dir:  /kaggle/input/grid-landmarks
+  noise_dir:     /kaggle/input/demand-noise
+  num_samples:   48000          # samples per clip (3 s at 16 kHz)
+  snr_range:     [-5.0, 20.0]
+  sir_range:     [-5.0, 20.0]
+  mix_probabilities: [0.5, 0.3, 0.2]
+
+# ── Model ─────────────────────────────────────────────────────────────────────
+model:
+  sample_rate:              16000
+  n_fft:                    512
+  hop_length:               128
+  win_length:               512
+  num_freq:                 257
+  feat_dim:                 128
+  num_bands:                32
+  num_low_bands:            30
+  num_high_bands:           2
+  num_layers:               6
+  use_visual_conditioning:  true
+  num_landmarks:            40
+  coord_dim:                3
+  visual_hidden_dim:        128
+  upsample_factor:          5
+  use_motion_deltas:        true
+  target_audio_frames:      376
+
+# ── Loss ──────────────────────────────────────────────────────────────────────
+loss:
+  window_ms:   [10, 20, 30, 40]   # STFT window lengths in ms
+  power:       0.3                 # magnitude compression exponent
+  hop_divisor: 4                   # hop = n_fft // hop_divisor per resolution
+
+# ── Training ──────────────────────────────────────────────────────────────────
+training:
+  batch_size:        4
+  num_workers:       4
+  max_steps:         300000
+  learning_rate:     1.0e-3
+  lr_decay_gamma:    0.98
+  lr_decay_steps:    20000         # multiply LR by gamma every this many steps
+  grad_clip_norm:    5.0
+  val_every_steps:   2000          # run validation every N optimizer steps
+  log_every_steps:   100           # print train loss every N steps
+  checkpoint_dir:    checkpoints/
+  seed:              42
