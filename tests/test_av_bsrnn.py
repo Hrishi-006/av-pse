@@ -15,7 +15,7 @@ def test_default_config_with_visual_conditioning() -> None:
     config = AVBSRNNConfig(use_visual_conditioning=True, num_layers=2)
     model = AVBSRNN(config)
 
-    wav = torch.randn(2, 48000)
+    wav = torch.randn(2, 47648)
     landmarks = torch.randn(2, 75, 40, 3)
 
     out = model(wav, landmarks)
@@ -24,10 +24,10 @@ def test_default_config_with_visual_conditioning() -> None:
     assert "waveform" in out
     assert "spectrogram" in out
     assert "noisy_spectrogram" in out
-    assert out["waveform"].shape == (2, 48000)
-    assert out["spectrogram"].shape == (2, 257, 376)
+    assert out["waveform"].shape == (2, 47648)
+    assert out["spectrogram"].shape == (2, 257, 373)
     assert out["spectrogram"].is_complex()
-    assert out["noisy_spectrogram"].shape == (2, 257, 376)
+    assert out["noisy_spectrogram"].shape == (2, 257, 373)
     assert out["noisy_spectrogram"].is_complex()
 
 
@@ -35,18 +35,18 @@ def test_without_visual_conditioning() -> None:
     config = AVBSRNNConfig(use_visual_conditioning=False, num_layers=2)
     model = AVBSRNN(config)
 
-    wav = torch.randn(2, 48000)
+    wav = torch.randn(2, 47648)
     out = model(wav)
 
-    assert out["waveform"].shape == (2, 48000)
-    assert out["spectrogram"].shape == (2, 257, 376)
+    assert out["waveform"].shape == (2, 47648)
+    assert out["spectrogram"].shape == (2, 257, 373)
 
 
 def test_visual_conditioning_requires_landmarks() -> None:
     config = AVBSRNNConfig(use_visual_conditioning=True, num_layers=2)
     model = AVBSRNN(config)
 
-    wav = torch.randn(1, 48000)
+    wav = torch.randn(1, 47648)
     try:
         model(wav, landmarks=None)
         assert False, "Expected assertion error for missing landmarks"
@@ -58,7 +58,7 @@ def test_gradient_flow_through_full_model_with_visual() -> None:
     config = AVBSRNNConfig(use_visual_conditioning=True, num_layers=2)
     model = AVBSRNN(config)
 
-    wav = torch.randn(1, 48000, requires_grad=True)
+    wav = torch.randn(1, 47648, requires_grad=True)
     landmarks = torch.randn(1, 75, 40, 3, requires_grad=True)
 
     out = model(wav, landmarks)
@@ -83,7 +83,7 @@ def test_gradient_flow_without_visual() -> None:
     config = AVBSRNNConfig(use_visual_conditioning=False, num_layers=2)
     model = AVBSRNN(config)
 
-    wav = torch.randn(1, 48000, requires_grad=True)
+    wav = torch.randn(1, 47648, requires_grad=True)
     out = model(wav)
     loss = out["waveform"].abs().sum()
     loss.backward()
@@ -141,10 +141,10 @@ def test_round_trip_waveform_length_preserved() -> None:
     config = AVBSRNNConfig(use_visual_conditioning=True, num_layers=2)
     model = AVBSRNN(config)
 
-    wav = torch.randn(1, 48000)
+    wav = torch.randn(1, 47648)
     landmarks = torch.randn(1, 75, 40, 3)
     out = model(wav, landmarks)
-    assert out["waveform"].shape == (1, 48000)
+    assert out["waveform"].shape == (1, 47648)
 
 
 def test_batch_size_invariance() -> None:
@@ -152,18 +152,18 @@ def test_batch_size_invariance() -> None:
     model = AVBSRNN(config)
 
     for batch_size in [1, 2, 4]:
-        wav = torch.randn(batch_size, 48000)
+        wav = torch.randn(batch_size, 47648)
         landmarks = torch.randn(batch_size, 75, 40, 3)
         out = model(wav, landmarks)
-        assert out["waveform"].shape == (batch_size, 48000)
-        assert out["spectrogram"].shape == (batch_size, 257, 376)
+        assert out["waveform"].shape == (batch_size, 47648)
+        assert out["spectrogram"].shape == (batch_size, 257, 373)
 
 
 def test_device_handling() -> None:
     if torch.cuda.is_available():
         config = AVBSRNNConfig(use_visual_conditioning=True, num_layers=2)
         model = AVBSRNN(config).cuda()
-        wav = torch.randn(1, 48000).cuda()
+        wav = torch.randn(1, 47648).cuda()
         landmarks = torch.randn(1, 75, 40, 3).cuda()
         out = model(wav, landmarks)
         assert out["waveform"].device.type == "cuda"
@@ -175,7 +175,7 @@ def test_eval_mode_produces_deterministic_output() -> None:
     model = AVBSRNN(config)
     model.eval()
 
-    wav = torch.randn(1, 48000)
+    wav = torch.randn(1, 47648)
     landmarks = torch.randn(1, 75, 40, 3)
 
     with torch.no_grad():

@@ -8,8 +8,8 @@ Usage example:
     >>> import torch
     >>> from losses.multi_res_loss import MultiResolutionLoss
     >>> loss_fn = MultiResolutionLoss(sample_rate=16000)
-    >>> enhanced = torch.randn(2, 48000)
-    >>> clean    = torch.randn(2, 48000)
+    >>> enhanced = torch.randn(2, 47648)
+    >>> clean    = torch.randn(2, 47648)
     >>> loss = loss_fn(enhanced, clean)
     >>> loss.shape
     torch.Size([])

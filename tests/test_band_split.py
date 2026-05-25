@@ -14,9 +14,9 @@ from models.stft import compute_stft
 
 def test_output_shape() -> None:
     module = BandSplit(feat_dim=128)
-    spec = torch.randn(2, 257, 376, dtype=torch.complex64)
+    spec = torch.randn(2, 257, 373, dtype=torch.complex64)
     out = module(spec)
-    assert out.shape == (2, 32, 376, 128), f"Got {out.shape}"
+    assert out.shape == (2, 32, 373, 128), f"Got {out.shape}"
     assert out.dtype == torch.float32
 
 
@@ -40,16 +40,16 @@ def test_each_band_has_its_own_parameters() -> None:
 
 
 def test_integration_with_stft() -> None:
-    wav = torch.randn(2, 48000)
+    wav = torch.randn(2, 47648)
     spec = compute_stft(wav)
     module = BandSplit()
     out = module(spec)
-    assert out.shape == (2, 32, 376, 128)
+    assert out.shape == (2, 32, 373, 128)
 
 
 def test_gradient_flow() -> None:
     module = BandSplit()
-    spec = torch.randn(1, 257, 376, dtype=torch.complex64)
+    spec = torch.randn(1, 257, 373, dtype=torch.complex64)
     out = module(spec)
     loss = out.sum()
     loss.backward()
@@ -62,23 +62,23 @@ def test_gradient_flow() -> None:
 def test_batch_size_invariance() -> None:
     module = BandSplit()
     for batch_size in [1, 4, 8]:
-        spec = torch.randn(batch_size, 257, 376, dtype=torch.complex64)
+        spec = torch.randn(batch_size, 257, 373, dtype=torch.complex64)
         out = module(spec)
-        assert out.shape == (batch_size, 32, 376, 128)
+        assert out.shape == (batch_size, 32, 373, 128)
 
 
 def test_different_feat_dim() -> None:
     for feat_dim in [64, 96, 128, 192]:
         module = BandSplit(feat_dim=feat_dim)
-        spec = torch.randn(1, 257, 376, dtype=torch.complex64)
+        spec = torch.randn(1, 257, 373, dtype=torch.complex64)
         out = module(spec)
-        assert out.shape == (1, 32, 376, feat_dim)
+        assert out.shape == (1, 32, 373, feat_dim)
 
 
 def test_device_handling() -> None:
     if torch.cuda.is_available():
         module = BandSplit().cuda()
-        spec = torch.randn(1, 257, 376, dtype=torch.complex64).cuda()
+        spec = torch.randn(1, 257, 373, dtype=torch.complex64).cuda()
         out = module(spec)
         assert out.device.type == "cuda"
 

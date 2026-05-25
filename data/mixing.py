@@ -3,9 +3,9 @@
 Usage:
     >>> import torch
     >>> from data.mixing import mix_audio, sample_mixing_config
-    >>> target = torch.randn(2, 48000)
-    >>> noise = torch.randn(2, 48000)
-    >>> interferer = torch.randn(2, 48000)
+    >>> target = torch.randn(2, 47648)
+    >>> noise = torch.randn(2, 47648)
+    >>> interferer = torch.randn(2, 47648)
     >>> cfg = sample_mixing_config(batch_size=2, device=target.device)
     >>> mixed = mix_audio(target, noise, interferer, cfg["snr_db"], cfg["sir_db"], cfg["use_interferer"])
 """

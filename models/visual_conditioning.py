@@ -7,7 +7,7 @@ Usage example:
     >>> module = VisualConditioningModule()
     >>> out = module(landmarks)
     >>> out.shape
-    torch.Size([2, 32, 376, 128])
+    torch.Size([2, 32, 373, 128])
 """
 
 from __future__ import annotations
@@ -36,7 +36,7 @@ class VisualConditioningModule(nn.Module):
         num_landmarks: int = 40,
         coord_dim: int = 3,
         hidden_dim: int = 128,
-        target_audio_frames: int = 376,
+        target_audio_frames: int = 373,
         upsample_factor: int = 5,
         use_motion_deltas: bool = True,
     ) -> None:

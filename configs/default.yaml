@@ -7,7 +7,7 @@ data:
   audio_dir:     /kaggle/input/grid-audio
   landmark_dir:  /kaggle/input/grid-landmarks
   noise_dir:     /kaggle/input/demand-noise
-  num_samples:   48000          # samples per clip (3 s at 16 kHz)
+  num_samples:   47648          # actual GRID clip length at 16 kHz (~2.978 s)
   snr_range:     [-5.0, 20.0]
   sir_range:     [-5.0, 20.0]
   mix_probabilities: [0.5, 0.3, 0.2]
@@ -30,7 +30,7 @@ model:
   visual_hidden_dim:        128
   upsample_factor:          5
   use_motion_deltas:        true
-  target_audio_frames:      376
+  target_audio_frames:      373
 
 # ── Loss ──────────────────────────────────────────────────────────────────────
 loss:

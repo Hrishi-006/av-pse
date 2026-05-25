@@ -166,7 +166,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--val_speakers", type=str, required=True, help="Comma-separated validation speakers.")
     parser.add_argument("--test_speakers", type=str, required=True, help="Comma-separated test speakers.")
     parser.add_argument("--sample_rate", type=int, default=16000, help="Expected WAV sample rate.")
-    parser.add_argument("--audio_samples_per_clip", type=int, default=48000, help="Expected WAV samples per clip.")
+    parser.add_argument("--audio_samples_per_clip", type=int, default=47648, help="Expected WAV samples per clip.")
     parser.add_argument("--video_fps", type=int, default=25, help="Video FPS recorded in manifest metadata.")
     parser.add_argument("--frames_per_clip", type=int, default=75, help="Expected landmark frames per clip.")
     parser.add_argument("--num_lip_landmarks", type=int, default=40, help="Expected lip landmarks per frame.")

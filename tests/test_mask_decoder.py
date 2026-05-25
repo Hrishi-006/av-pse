@@ -16,9 +16,9 @@ from models.stft import compute_stft
 
 def test_band_mask_mlp_output_shape() -> None:
     mlp = BandMaskMLP(feat_dim=128, band_width=4)
-    x = torch.randn(2, 376, 128)
+    x = torch.randn(2, 373, 128)
     out = mlp(x)
-    assert out.shape == (2, 376, 4, 2), f"Got {out.shape}"
+    assert out.shape == (2, 373, 4, 2), f"Got {out.shape}"
 
 
 def test_band_mask_mlp_with_different_band_widths() -> None:
@@ -31,18 +31,18 @@ def test_band_mask_mlp_with_different_band_widths() -> None:
 
 def test_residual_mlp_output_shape_and_complex() -> None:
     mlp = ResidualMLP(num_bands=32, feat_dim=128, num_freq=257)
-    x = torch.randn(2, 32, 376, 128)
+    x = torch.randn(2, 32, 373, 128)
     out = mlp(x)
-    assert out.shape == (2, 257, 376)
+    assert out.shape == (2, 257, 373)
     assert out.is_complex()
 
 
 def test_mask_decoder_output_shape() -> None:
     decoder = MaskDecoder(feat_dim=128)
-    features = torch.randn(2, 32, 376, 128)
-    noisy_spec = torch.randn(2, 257, 376, dtype=torch.complex64)
+    features = torch.randn(2, 32, 373, 128)
+    noisy_spec = torch.randn(2, 257, 373, dtype=torch.complex64)
     enhanced = decoder(features, noisy_spec)
-    assert enhanced.shape == (2, 257, 376)
+    assert enhanced.shape == (2, 257, 373)
     assert enhanced.is_complex()
 
 
@@ -62,8 +62,8 @@ def test_each_band_has_its_own_mask_mlp() -> None:
 
 def test_mismatched_k_raises() -> None:
     decoder = MaskDecoder(feat_dim=128)
-    features_wrong = torch.randn(1, 31, 376, 128)
-    noisy_spec = torch.randn(1, 257, 376, dtype=torch.complex64)
+    features_wrong = torch.randn(1, 31, 373, 128)
+    noisy_spec = torch.randn(1, 257, 373, dtype=torch.complex64)
     try:
         decoder(features_wrong, noisy_spec)
         assert False, "Expected assertion error"
@@ -73,8 +73,8 @@ def test_mismatched_k_raises() -> None:
 
 def test_gradient_flow() -> None:
     decoder = MaskDecoder(feat_dim=128)
-    features = torch.randn(1, 32, 376, 128, requires_grad=True)
-    noisy_spec = torch.randn(1, 257, 376, dtype=torch.complex64)
+    features = torch.randn(1, 32, 373, 128, requires_grad=True)
+    noisy_spec = torch.randn(1, 257, 373, dtype=torch.complex64)
     enhanced = decoder(features, noisy_spec)
 
     loss = enhanced.abs().sum()
@@ -88,7 +88,7 @@ def test_gradient_flow() -> None:
 
 
 def test_end_to_end_pipeline_shape() -> None:
-    wav = torch.randn(2, 48000)
+    wav = torch.randn(2, 47648)
     spec = compute_stft(wav)
 
     split = BandSplit(feat_dim=128)
@@ -106,27 +106,27 @@ def test_end_to_end_pipeline_shape() -> None:
 
 def test_different_feat_dim_works_for_visual_conditioning_case() -> None:
     decoder = MaskDecoder(feat_dim=256)
-    features = torch.randn(1, 32, 376, 256)
-    noisy_spec = torch.randn(1, 257, 376, dtype=torch.complex64)
+    features = torch.randn(1, 32, 373, 256)
+    noisy_spec = torch.randn(1, 257, 373, dtype=torch.complex64)
     enhanced = decoder(features, noisy_spec)
-    assert enhanced.shape == (1, 257, 376)
+    assert enhanced.shape == (1, 257, 373)
     assert enhanced.is_complex()
 
 
 def test_batch_size_invariance() -> None:
     decoder = MaskDecoder(feat_dim=128)
     for batch_size in [1, 2, 4]:
-        features = torch.randn(batch_size, 32, 376, 128)
-        noisy_spec = torch.randn(batch_size, 257, 376, dtype=torch.complex64)
+        features = torch.randn(batch_size, 32, 373, 128)
+        noisy_spec = torch.randn(batch_size, 257, 373, dtype=torch.complex64)
         enhanced = decoder(features, noisy_spec)
-        assert enhanced.shape == (batch_size, 257, 376)
+        assert enhanced.shape == (batch_size, 257, 373)
 
 
 def test_device_handling() -> None:
     if torch.cuda.is_available():
         decoder = MaskDecoder(feat_dim=128).cuda()
-        features = torch.randn(1, 32, 376, 128).cuda()
-        noisy_spec = torch.randn(1, 257, 376, dtype=torch.complex64).cuda()
+        features = torch.randn(1, 32, 373, 128).cuda()
+        noisy_spec = torch.randn(1, 257, 373, dtype=torch.complex64).cuda()
         enhanced = decoder(features, noisy_spec)
         assert enhanced.device.type == "cuda"
 

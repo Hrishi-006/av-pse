@@ -38,7 +38,7 @@ def fake_dataset_dir() -> Iterator[dict[str, str]]:
             (landmark_dir / speaker).mkdir()
             for clip_idx in range(2):
                 clip_id = f"clip{clip_idx}"
-                wav = (np.random.randn(48000) * 0.1).astype(np.float32)
+                wav = (np.random.randn(47648) * 0.1).astype(np.float32)
                 sf.write(audio_dir / speaker / f"{clip_id}.wav", wav, 16000)
 
                 landmarks = (np.random.randn(75, 40, 3) * 0.05).astype(np.float32)
@@ -54,13 +54,13 @@ def fake_dataset_dir() -> Iterator[dict[str, str]]:
                 )
 
         for i in range(2):
-            noise = (np.random.randn(48000 * 5) * 0.1).astype(np.float32)
+            noise = (np.random.randn(47648 * 5) * 0.1).astype(np.float32)
             sf.write(noise_dir / f"noise{i}.wav", noise, 16000)
 
         manifest = {
             "metadata": {
                 "sample_rate": 16000,
-                "audio_samples_per_clip": 48000,
+                "audio_samples_per_clip": 47648,
                 "video_fps": 25,
                 "frames_per_clip": 75,
                 "num_lip_landmarks": 40,
@@ -97,8 +97,8 @@ def test_dataset_length(fake_dataset_dir: dict[str, str]) -> None:
 def test_sample_shapes(fake_dataset_dir: dict[str, str]) -> None:
     ds = GRIDAVDataset(split="train", **fake_dataset_dir)
     sample = ds[0]
-    assert sample["noisy"].shape == (48000,)
-    assert sample["clean"].shape == (48000,)
+    assert sample["noisy"].shape == (47648,)
+    assert sample["clean"].shape == (47648,)
     assert sample["landmarks"].shape == (75, 40, 3)
     assert sample["noisy"].dtype == torch.float32
     assert sample["clean"].dtype == torch.float32
@@ -145,8 +145,8 @@ def test_mix_probabilities(fake_dataset_dir: dict[str, str]) -> None:
 def test_collate(fake_dataset_dir: dict[str, str]) -> None:
     ds = GRIDAVDataset(split="train", **fake_dataset_dir)
     batch = grid_av_collate([ds[0], ds[1], ds[2]])
-    assert batch["noisy"].shape == (3, 48000)
-    assert batch["clean"].shape == (3, 48000)
+    assert batch["noisy"].shape == (3, 47648)
+    assert batch["clean"].shape == (3, 47648)
     assert batch["landmarks"].shape == (3, 75, 40, 3)
     assert len(batch["speakers"]) == 3
     assert batch["snr_db"].shape == (3,)
@@ -163,8 +163,8 @@ def test_dataloader(fake_dataset_dir: dict[str, str]) -> None:
         shuffle=False,
     )
     batch = next(iter(loader))
-    assert batch["noisy"].shape == (2, 48000)
-    assert batch["clean"].shape == (2, 48000)
+    assert batch["noisy"].shape == (2, 47648)
+    assert batch["clean"].shape == (2, 47648)
     assert batch["landmarks"].shape == (2, 75, 40, 3)
 
 
@@ -182,7 +182,7 @@ def test_end_to_end_with_model(fake_dataset_dir: dict[str, str]) -> None:
 
     out = model(batch["noisy"], batch["landmarks"])
     assert out["waveform"].shape == batch["clean"].shape
-    assert out["spectrogram"].shape == (2, 257, 376)
+    assert out["spectrogram"].shape == (2, 257, 373)
 
 
 def test_interferer_is_different_speaker(fake_dataset_dir: dict[str, str]) -> None:

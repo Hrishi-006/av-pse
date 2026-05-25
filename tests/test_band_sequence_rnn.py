@@ -13,7 +13,7 @@ from models.band_sequence_rnn import BandBlockBSRNNS, BandSequenceLayer, BandSeq
 
 def test_time_block_preserves_shape() -> None:
     block = TimeBlock(feat_dim=128)
-    x = torch.randn(2, 32, 376, 128)
+    x = torch.randn(2, 32, 373, 128)
     out = block(x)
     assert out.shape == x.shape
 
@@ -27,14 +27,14 @@ def test_time_block_is_non_trivial() -> None:
 
 def test_band_block_bsrnns_preserves_shape() -> None:
     block = BandBlockBSRNNS(feat_dim=128, num_low_bands=30, num_high_bands=2)
-    x = torch.randn(2, 32, 376, 128)
+    x = torch.randn(2, 32, 373, 128)
     out = block(x)
     assert out.shape == x.shape
 
 
 def test_band_block_bsrnns_validates_k_mismatch() -> None:
     block = BandBlockBSRNNS(feat_dim=128, num_low_bands=30, num_high_bands=2)
-    x = torch.randn(1, 31, 376, 128)
+    x = torch.randn(1, 31, 373, 128)
     try:
         block(x)
         assert False, "Expected assertion error for wrong K"
@@ -44,36 +44,36 @@ def test_band_block_bsrnns_validates_k_mismatch() -> None:
 
 def test_band_sequence_layer_preserves_shape() -> None:
     layer = BandSequenceLayer(feat_dim=128, num_low_bands=30, num_high_bands=2)
-    x = torch.randn(2, 32, 376, 128)
+    x = torch.randn(2, 32, 373, 128)
     out = layer(x)
     assert out.shape == x.shape
 
 
 def test_full_band_sequence_rnn_preserves_shape() -> None:
     model = BandSequenceRNN(feat_dim=128, num_low_bands=30, num_high_bands=2, num_layers=6)
-    x = torch.randn(2, 32, 376, 128)
+    x = torch.randn(2, 32, 373, 128)
     out = model(x)
     assert out.shape == x.shape
 
 
 def test_configurable_feat_dim_for_visual_conditioning() -> None:
     model = BandSequenceRNN(feat_dim=256, num_low_bands=30, num_high_bands=2, num_layers=2)
-    x = torch.randn(1, 32, 376, 256)
+    x = torch.randn(1, 32, 373, 256)
     out = model(x)
-    assert out.shape == (1, 32, 376, 256)
+    assert out.shape == (1, 32, 373, 256)
 
 
 def test_different_layer_counts() -> None:
     for num_layers in [1, 3, 6]:
         model = BandSequenceRNN(feat_dim=128, num_low_bands=30, num_high_bands=2, num_layers=num_layers)
-        x = torch.randn(1, 32, 376, 128)
+        x = torch.randn(1, 32, 373, 128)
         out = model(x)
         assert out.shape == x.shape
 
 
 def test_gradient_flow_through_full_model() -> None:
     model = BandSequenceRNN(feat_dim=128, num_low_bands=30, num_high_bands=2, num_layers=6)
-    x = torch.randn(1, 32, 376, 128, requires_grad=True)
+    x = torch.randn(1, 32, 373, 128, requires_grad=True)
     out = model(x)
     loss = out.sum()
     loss.backward()
@@ -116,15 +116,15 @@ def test_information_flow_direction_bsrnns_asymmetry() -> None:
 def test_batch_size_invariance() -> None:
     model = BandSequenceRNN(feat_dim=128, num_low_bands=30, num_high_bands=2, num_layers=2)
     for batch_size in [1, 2, 4]:
-        x = torch.randn(batch_size, 32, 376, 128)
+        x = torch.randn(batch_size, 32, 373, 128)
         out = model(x)
-        assert out.shape == (batch_size, 32, 376, 128)
+        assert out.shape == (batch_size, 32, 373, 128)
 
 
 def test_device_handling() -> None:
     if torch.cuda.is_available():
         model = BandSequenceRNN(feat_dim=128, num_low_bands=30, num_high_bands=2, num_layers=2).cuda()
-        x = torch.randn(1, 32, 376, 128).cuda()
+        x = torch.randn(1, 32, 373, 128).cuda()
         out = model(x)
         assert out.device.type == "cuda"
 

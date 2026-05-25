@@ -45,7 +45,7 @@ from models.av_bsrnn import AVBSRNN, AVBSRNNConfig
 
 # Four clips from s1 whose audio and landmarks are both known-good.
 DEFAULT_CLIPS = ["bbaf2n", "bbaf3s", "bbaf4p", "bbaf5a"]
-NUM_SAMPLES = 48000  # 3 s @ 16 kHz
+NUM_SAMPLES = 47648  # actual GRID clip length at 16 kHz (~2.978 s)
 
 
 # ── SI-SNR metric (no external library) ─────────────────────────────────────

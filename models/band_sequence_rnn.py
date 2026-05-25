@@ -3,11 +3,11 @@
 Usage example:
     >>> import torch
     >>> from models.band_sequence_rnn import BandSequenceRNN
-    >>> x = torch.randn(2, 32, 376, 128)
+    >>> x = torch.randn(2, 32, 373, 128)
     >>> model = BandSequenceRNN(feat_dim=128, num_low_bands=30, num_high_bands=2)
     >>> y = model(x)
     >>> y.shape
-    torch.Size([2, 32, 376, 128])
+    torch.Size([2, 32, 373, 128])
 """
 
 from __future__ import annotations

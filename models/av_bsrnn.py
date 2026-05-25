@@ -5,11 +5,11 @@ Usage example:
     >>> from models.av_bsrnn import AVBSRNN, AVBSRNNConfig
     >>> config = AVBSRNNConfig(use_visual_conditioning=True, num_layers=2)
     >>> model = AVBSRNN(config)
-    >>> wav = torch.randn(1, 48000)
+    >>> wav = torch.randn(1, 47648)
     >>> landmarks = torch.randn(1, 75, 40, 3)
     >>> out = model(wav, landmarks)
     >>> out["waveform"].shape, out["spectrogram"].shape
-    (torch.Size([1, 48000]), torch.Size([1, 257, 376]))
+    (torch.Size([1, 47648]), torch.Size([1, 257, 373]))
 
 Architecture:
     noisy waveform [B, S]
@@ -82,7 +82,7 @@ class AVBSRNNConfig:
     visual_hidden_dim: int = 128
     upsample_factor: int = 5
     use_motion_deltas: bool = True
-    target_audio_frames: int = 376
+    target_audio_frames: int = 373
 
 
 class AVBSRNN(nn.Module):

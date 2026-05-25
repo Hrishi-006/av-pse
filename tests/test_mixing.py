@@ -19,8 +19,8 @@ def test_rms_computation() -> None:
 
 
 def test_snr_scaling_achieves_target_snr() -> None:
-    target = torch.randn(4, 48000)
-    noise = torch.randn(4, 48000)
+    target = torch.randn(4, 47648)
+    noise = torch.randn(4, 47648)
     snr_db = torch.tensor([0.0, 5.0, 10.0, 20.0])
     scaled_noise = scale_to_snr(target, noise, snr_db)
     achieved_snr = 20 * torch.log10(rms(target) / rms(scaled_noise))
@@ -30,14 +30,14 @@ def test_snr_scaling_achieves_target_snr() -> None:
 
 
 def test_mixing_produces_expected_shape() -> None:
-    target = torch.randn(2, 48000) * 0.1
-    noise = torch.randn(2, 48000) * 0.1
-    interferer = torch.randn(2, 48000) * 0.1
+    target = torch.randn(2, 47648) * 0.1
+    noise = torch.randn(2, 47648) * 0.1
+    interferer = torch.randn(2, 47648) * 0.1
     snr_db = torch.tensor([5.0, 10.0])
     sir_db = torch.tensor([5.0, 10.0])
     use_int = torch.tensor([True, False])
     mixed = mix_audio(target, noise, interferer, snr_db, sir_db, use_int)
-    assert mixed.shape == (2, 48000)
+    assert mixed.shape == (2, 47648)
     assert mixed.abs().max() <= 0.99
 
 

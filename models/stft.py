@@ -3,7 +3,7 @@
 Usage:
     >>> import torch
     >>> from models.stft import compute_istft, compute_stft
-    >>> wav = torch.randn(2, 48000)
+    >>> wav = torch.randn(2, 47648)
     >>> spec = compute_stft(wav)
     >>> recon = compute_istft(spec, length=wav.shape[-1])
 """

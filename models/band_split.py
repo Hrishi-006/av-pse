@@ -3,11 +3,11 @@
 Usage example:
     >>> import torch
     >>> from models.band_split import BandSplit
-    >>> spec = torch.randn(2, 257, 376, dtype=torch.complex64)
+    >>> spec = torch.randn(2, 257, 373, dtype=torch.complex64)
     >>> module = BandSplit(feat_dim=128)
     >>> out = module(spec)
     >>> out.shape
-    torch.Size([2, 32, 376, 128])
+    torch.Size([2, 32, 373, 128])
 """
 
 from __future__ import annotations

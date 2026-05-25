@@ -3,7 +3,7 @@
 Usage:
     >>> import torch
     >>> from models.stft import compute_istft, compute_stft
-    >>> wav = torch.randn(2, 48000)
+    >>> wav = torch.randn(2, 47648)
     >>> spec = compute_stft(wav)
     >>> recon = compute_istft(spec, length=wav.shape[-1])
 """
@@ -84,7 +84,7 @@ def get_stft_frame_count(num_samples: int, hop_length: int = 128) -> int:
 
 
 
-wav = torch.randn(1, 48000)
+wav = torch.randn(1, 47648)
 spec = compute_stft(wav)
-print(spec.shape)  # should be torch.Size([1, 257, 376])
+print(spec.shape)  # should be torch.Size([1, 257, 373])
 print(spec.dtype)  # should be torch.complex64

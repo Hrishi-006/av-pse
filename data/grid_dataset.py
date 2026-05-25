@@ -13,7 +13,7 @@ Usage example:
     >>> loader = DataLoader(dataset, batch_size=8, collate_fn=grid_av_collate)
     >>> batch = next(iter(loader))
     >>> batch["noisy"].shape, batch["clean"].shape, batch["landmarks"].shape
-    (torch.Size([8, 48000]), torch.Size([8, 48000]), torch.Size([8, 75, 40, 3]))
+    (torch.Size([8, 47648]), torch.Size([8, 47648]), torch.Size([8, 75, 40, 3]))
 """
 
 from __future__ import annotations
@@ -53,7 +53,7 @@ class GRIDAVDataset(Dataset[dict[str, Any]]):
         snr_range: tuple[float, float] = (-5.0, 20.0),
         sir_range: tuple[float, float] = (-5.0, 20.0),
         mix_probabilities: tuple[float, float, float] = (0.5, 0.3, 0.2),
-        num_samples: int = 48000,
+        num_samples: int = 47648,
         seed: Optional[int] = None,
     ) -> None:
         """Initialize the dataset from a manifest and data roots."""

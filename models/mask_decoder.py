@@ -3,12 +3,12 @@
 Usage example:
     >>> import torch
     >>> from models.mask_decoder import MaskDecoder
-    >>> features = torch.randn(2, 32, 376, 128)
-    >>> noisy_spec = torch.randn(2, 257, 376, dtype=torch.complex64)
+    >>> features = torch.randn(2, 32, 373, 128)
+    >>> noisy_spec = torch.randn(2, 257, 373, dtype=torch.complex64)
     >>> decoder = MaskDecoder(feat_dim=128)
     >>> enhanced = decoder(features, noisy_spec)
     >>> enhanced.shape
-    torch.Size([2, 257, 376])
+    torch.Size([2, 257, 373])
 """
 
 from __future__ import annotations

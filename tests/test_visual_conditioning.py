@@ -15,7 +15,7 @@ def test_output_shape_with_default_config() -> None:
     module = VisualConditioningModule()
     x = torch.randn(2, 75, 40, 3)
     out = module(x)
-    assert out.shape == (2, 32, 376, 128), f"Got {out.shape}"
+    assert out.shape == (2, 32, 373, 128), f"Got {out.shape}"
 
 
 def test_output_is_real_valued_float32() -> None:
@@ -39,7 +39,7 @@ def test_output_shape_unchanged_whether_deltas_are_on_or_off() -> None:
         module = VisualConditioningModule(use_motion_deltas=use_deltas)
         x = torch.randn(1, 75, 40, 3)
         out = module(x)
-        assert out.shape == (1, 32, 376, 128)
+        assert out.shape == (1, 32, 373, 128)
 
 
 def test_gradient_flow() -> None:
@@ -61,7 +61,7 @@ def test_different_batch_sizes() -> None:
     for batch_size in [1, 2, 4, 8]:
         x = torch.randn(batch_size, 75, 40, 3)
         out = module(x)
-        assert out.shape == (batch_size, 32, 376, 128)
+        assert out.shape == (batch_size, 32, 373, 128)
 
 
 def test_each_band_has_its_own_projection() -> None:
@@ -76,14 +76,14 @@ def test_configurable_feat_dim() -> None:
         module = VisualConditioningModule(feat_dim=feat_dim)
         x = torch.randn(1, 75, 40, 3)
         out = module(x)
-        assert out.shape == (1, 32, 376, feat_dim)
+        assert out.shape == (1, 32, 373, feat_dim)
 
 
 def test_configurable_num_bands() -> None:
     module = VisualConditioningModule(num_bands=20)
     x = torch.randn(1, 75, 40, 3)
     out = module(x)
-    assert out.shape == (1, 20, 376, 128)
+    assert out.shape == (1, 20, 373, 128)
 
 
 def test_deltas_computation_is_correct() -> None:
@@ -100,7 +100,7 @@ def test_concatenation_with_band_split_features_integration() -> None:
     from models.band_split import BandSplit
     from models.stft import compute_stft
 
-    wav = torch.randn(2, 48000)
+    wav = torch.randn(2, 47648)
     spec = compute_stft(wav)
 
     bs = BandSplit(feat_dim=128)
@@ -111,7 +111,7 @@ def test_concatenation_with_band_split_features_integration() -> None:
     v = vc(landmarks)
 
     combined = torch.cat([z, v], dim=-1)
-    assert combined.shape == (2, 32, 376, 256)
+    assert combined.shape == (2, 32, 373, 256)
 
 
 def test_full_pipeline_including_visual_conditioning() -> None:
@@ -120,7 +120,7 @@ def test_full_pipeline_including_visual_conditioning() -> None:
     from models.mask_decoder import MaskDecoder
     from models.stft import compute_stft
 
-    wav = torch.randn(1, 48000)
+    wav = torch.randn(1, 47648)
     landmarks = torch.randn(1, 75, 40, 3)
 
     spec = compute_stft(wav)
@@ -132,7 +132,7 @@ def test_full_pipeline_including_visual_conditioning() -> None:
     processed = rnn(combined)
 
     enhanced = MaskDecoder(feat_dim=256)(processed, spec)
-    assert enhanced.shape == (1, 257, 376)
+    assert enhanced.shape == (1, 257, 373)
     assert enhanced.is_complex()
 
 
