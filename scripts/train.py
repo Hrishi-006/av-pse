@@ -14,6 +14,7 @@ import argparse
 import logging
 import random
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -180,13 +181,13 @@ def build_loss(cfg: dict[str, Any]) -> MultiResolutionLoss:
 def build_optimizer_and_scheduler(
     model: nn.Module,
     cfg: dict[str, Any],
-) -> tuple[torch.optim.Adam, torch.optim.lr_scheduler.StepLR]:
+) -> tuple[torch.optim.Adam, torch.optim.lr_scheduler.CosineAnnealingLR]:
     tc = cfg["training"]
     optimizer = torch.optim.Adam(model.parameters(), lr=tc["learning_rate"])
-    scheduler = torch.optim.lr_scheduler.StepLR(
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        step_size=tc["lr_decay_steps"],
-        gamma=tc["lr_decay_gamma"],
+        T_max=tc["max_steps"],
+        eta_min=tc["lr_min"],
     )
     return optimizer, scheduler
 
@@ -197,7 +198,7 @@ def save_checkpoint(
     path: Path,
     model: nn.Module,
     optimizer: torch.optim.Optimizer,
-    scheduler: torch.optim.lr_scheduler.StepLR,
+    scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
     val_loss: float,
 ) -> None:
@@ -217,15 +218,61 @@ def load_checkpoint(
     path: Path,
     model: nn.Module,
     optimizer: torch.optim.Optimizer,
-    scheduler: torch.optim.lr_scheduler.StepLR,
+    scheduler: torch.optim.lr_scheduler.LRScheduler,
     device: torch.device,
+    logger: logging.Logger | None = None,
 ) -> tuple[int, float]:
-    """Load checkpoint into model/optimizer/scheduler. Returns (step, val_loss)."""
+    """Load checkpoint into model/optimizer/scheduler. Returns (step, val_loss).
+
+    Scheduler state is loaded only when the saved state-dict keys exactly match
+    the current scheduler type (e.g. both CosineAnnealingLR).  When the keys
+    differ (e.g. old StepLR checkpoint, new CosineAnnealingLR run) the saved
+    state is skipped and the new scheduler is fast-forwarded by calling
+    ``scheduler.step()`` *step* times so the LR is at the correct cosine
+    position.  PyTorch's ``load_state_dict`` is a plain ``dict.update`` and
+    will NOT raise on a type mismatch, so we must detect it via key comparison.
+    """
     ckpt = torch.load(path, map_location=device)
     model.load_state_dict(ckpt["model_state"])
     optimizer.load_state_dict(ckpt["optimizer_state"])
-    scheduler.load_state_dict(ckpt["scheduler_state"])
-    return ckpt["step"], ckpt.get("val_loss", float("inf"))
+    step: int = ckpt["step"]
+
+    saved_sched = ckpt.get("scheduler_state")
+    scheduler_restored = False
+
+    if saved_sched is not None:
+        current_keys = set(scheduler.state_dict().keys())
+        saved_keys = set(saved_sched.keys())
+
+        if current_keys == saved_keys:
+            # Same scheduler type — safe to restore normally.
+            try:
+                scheduler.load_state_dict(saved_sched)
+                scheduler_restored = True
+            except (ValueError, KeyError, RuntimeError) as exc:
+                if logger:
+                    logger.warning("Scheduler state load failed (%s); will fast-forward.", exc)
+        else:
+            # Type mismatch (e.g. StepLR → CosineAnnealingLR).
+            extra_saved = sorted(saved_keys - current_keys)
+            extra_current = sorted(current_keys - saved_keys)
+            if logger:
+                logger.warning(
+                    "Scheduler type mismatch — checkpoint keys %s not in current "
+                    "scheduler (which has %s). Skipping saved state; "
+                    "fast-forwarding new scheduler %d steps instead.",
+                    extra_saved, extra_current, step,
+                )
+
+    if not scheduler_restored:
+        # Advance the fresh scheduler to the correct position without triggering
+        # the "scheduler.step() before optimizer.step()" warning.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            for _ in range(step):
+                scheduler.step()
+
+    return step, ckpt.get("val_loss", float("inf"))
 
 
 # ── Validation ───────────────────────────────────────────────────────────────
@@ -277,7 +324,7 @@ def train(
 
     if resume_path is not None:
         step, best_val_loss = load_checkpoint(
-            resume_path, model, optimizer, scheduler, device
+            resume_path, model, optimizer, scheduler, device, logger=logger
         )
         logger.info("Resumed from %s at step %d (best val=%.4f)", resume_path, step, best_val_loss)
 

@@ -42,10 +42,9 @@ loss:
 training:
   batch_size:        4
   num_workers:       4
-  max_steps:         300000
+  max_steps:         40000
   learning_rate:     1.0e-3
-  lr_decay_gamma:    0.98
-  lr_decay_steps:    20000         # multiply LR by gamma every this many steps
+  lr_min:            1.0e-5        # cosine annealing floor (reached at max_steps)
   grad_clip_norm:    5.0
   val_every_steps:   2000          # run validation every N optimizer steps
   log_every_steps:   100           # print train loss every N steps
