@@ -196,7 +196,7 @@ def build_optimizer_and_scheduler(
 
 def save_checkpoint(
     path: Path,
-    model: nn.Module,
+    model: AVBSRNN,
     optimizer: torch.optim.Optimizer,
     scheduler: torch.optim.lr_scheduler.LRScheduler,
     step: int,
@@ -206,6 +206,9 @@ def save_checkpoint(
         {
             "step": step,
             "val_loss": val_loss,
+            # Save arch so evaluate.py can reconstruct the model without
+            # requiring a matching YAML config file.
+            "model_cfg": vars(model.config),
             "model_state": model.state_dict(),
             "optimizer_state": optimizer.state_dict(),
             "scheduler_state": scheduler.state_dict(),
