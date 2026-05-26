@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import logging
 import sys
 from pathlib import Path
 from typing import Any
@@ -106,38 +107,108 @@ def save_wav(path: Path, wav: torch.Tensor, sr: int = 16000) -> None:
 
 # ── Model loading ─────────────────────────────────────────────────────────────
 
+_log = logging.getLogger("av_pse.evaluate")
+
+
+def _infer_arch_from_state(
+    state: dict[str, Any],
+    base_mc: dict[str, Any],
+) -> dict[str, Any]:
+    """Return a corrected copy of ``cfg["model"]`` using shapes from the checkpoint.
+
+    Detects and fixes the three params most commonly varied between experiments:
+    ``feat_dim``, ``num_layers``, and ``use_visual_conditioning``.  Everything
+    else is taken verbatim from ``base_mc``.
+    """
+    mc = dict(base_mc)
+
+    # feat_dim  ── band_split.projections.0.weight has shape [feat_dim, band_bins]
+    proj_key = "band_split.projections.0.weight"
+    if proj_key in state:
+        inferred = state[proj_key].shape[0]
+        if inferred != mc["feat_dim"]:
+            _log.warning(
+                "feat_dim mismatch: config=%d, checkpoint=%d — using checkpoint value.",
+                mc["feat_dim"], inferred,
+            )
+            mc["feat_dim"] = inferred
+
+    # num_layers ── count distinct index tokens in band_sequence_rnn.layers.<N>.*
+    layer_indices = {
+        int(k.split(".")[2])
+        for k in state
+        if k.startswith("band_sequence_rnn.layers.")
+    }
+    if layer_indices:
+        inferred = len(layer_indices)
+        if inferred != mc["num_layers"]:
+            _log.warning(
+                "num_layers mismatch: config=%d, checkpoint=%d — using checkpoint value.",
+                mc["num_layers"], inferred,
+            )
+            mc["num_layers"] = inferred
+
+    # use_visual_conditioning ── presence of any visual_conditioning.* key
+    inferred_vis = any(k.startswith("visual_conditioning.") for k in state)
+    if inferred_vis != mc["use_visual_conditioning"]:
+        _log.warning(
+            "use_visual_conditioning mismatch: config=%s, checkpoint=%s — using checkpoint value.",
+            mc["use_visual_conditioning"], inferred_vis,
+        )
+        mc["use_visual_conditioning"] = inferred_vis
+
+    return mc
+
+
 def load_model(
     checkpoint_path: Path,
     cfg: dict[str, Any],
     device: torch.device,
 ) -> AVBSRNN:
-    """Reconstruct AVBSRNN from config and load weights from checkpoint.
+    """Reconstruct AVBSRNN from a checkpoint and load its weights.
 
-    Only ``model_state`` is loaded; optimizer and scheduler states are ignored.
+    Architecture priority (prevents size-mismatch crashes):
+      1. ``model_cfg`` saved inside the checkpoint by train.py — fully
+         self-describing, YAML is ignored for architecture.
+      2. Auto-detected from state-dict shapes — fixes ``feat_dim`` /
+         ``num_layers`` / ``use_visual_conditioning`` mismatches between
+         the YAML and an older checkpoint.
+      3. ``cfg["model"]`` verbatim — final fallback.
+
+    Only ``model_state`` is loaded; optimizer / scheduler states are ignored.
     """
-    mc = cfg["model"]
-    config = AVBSRNNConfig(
-        sample_rate=mc["sample_rate"],
-        n_fft=mc["n_fft"],
-        hop_length=mc["hop_length"],
-        win_length=mc["win_length"],
-        num_freq=mc["num_freq"],
-        feat_dim=mc["feat_dim"],
-        num_bands=mc["num_bands"],
-        num_low_bands=mc["num_low_bands"],
-        num_high_bands=mc["num_high_bands"],
-        num_layers=mc["num_layers"],
-        use_visual_conditioning=mc["use_visual_conditioning"],
-        num_landmarks=mc["num_landmarks"],
-        coord_dim=mc["coord_dim"],
-        visual_hidden_dim=mc["visual_hidden_dim"],
-        upsample_factor=mc["upsample_factor"],
-        use_motion_deltas=mc["use_motion_deltas"],
-        target_audio_frames=mc["target_audio_frames"],
-    )
-    model = AVBSRNN(config)
     ckpt = torch.load(checkpoint_path, map_location=device, weights_only=False)
-    model.load_state_dict(ckpt["model_state"])
+    state = ckpt["model_state"]
+
+    if "model_cfg" in ckpt:
+        # Checkpoint saved by train.py after Stage 13 — fully self-describing.
+        config = AVBSRNNConfig(**ckpt["model_cfg"])
+        _log.info("Architecture loaded from checkpoint's saved model_cfg.")
+    else:
+        # Legacy checkpoint: patch cfg["model"] from state-dict shapes.
+        mc = _infer_arch_from_state(state, cfg["model"])
+        config = AVBSRNNConfig(
+            sample_rate=mc["sample_rate"],
+            n_fft=mc["n_fft"],
+            hop_length=mc["hop_length"],
+            win_length=mc["win_length"],
+            num_freq=mc["num_freq"],
+            feat_dim=mc["feat_dim"],
+            num_bands=mc["num_bands"],
+            num_low_bands=mc["num_low_bands"],
+            num_high_bands=mc["num_high_bands"],
+            num_layers=mc["num_layers"],
+            use_visual_conditioning=mc["use_visual_conditioning"],
+            num_landmarks=mc["num_landmarks"],
+            coord_dim=mc["coord_dim"],
+            visual_hidden_dim=mc["visual_hidden_dim"],
+            upsample_factor=mc["upsample_factor"],
+            use_motion_deltas=mc["use_motion_deltas"],
+            target_audio_frames=mc["target_audio_frames"],
+        )
+
+    model = AVBSRNN(config)
+    model.load_state_dict(state)
     model.to(device)
     model.eval()
     return model
